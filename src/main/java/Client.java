@@ -13,8 +13,9 @@ public class Client extends Thread{
     Consumer<Serializable> callback;
     String ip;
     int port;
+    Socket socket;
 
-    Client(Consumer<Serializable> callback, String ip, int port) {
+    Client( Consumer<Serializable> callback, String ip, int port) {
         this.callback = callback;
         this.ip = ip;
         this.port = port;
@@ -22,18 +23,39 @@ public class Client extends Thread{
 
     @Override
     public void run(){
-        try (Socket socket = new Socket(ip, port)){
+        try {
+            socket = new Socket(ip, port);
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
             socket.setTcpNoDelay(true);
+
         } catch (Exception e){
             System.out.println("Could not create connection with server");
             e.printStackTrace();
         }
 
-        while(true){
-            //Read in input and update board
+        try {
+            out.writeObject("b b X X b b O O b");
+            callback.accept(convertStringToCharArray(in.readObject().toString()));
+            //out.writeObject("b b X X b b O O O");
+        }catch (Exception e){
+            e.printStackTrace();
         }
+
+
+//        while(true){
+//            //Read in input and update board
+//        }
+    }
+
+    private static char[] convertStringToCharArray(String input) {
+        // Remove unwanted characters from the input string
+        String cleanedInput = input.replaceAll("[^a-zA-Z]", "");
+
+        // Convert the cleaned string to a char array
+        char[] charArray = cleanedInput.toCharArray();
+
+        return charArray;
     }
 
     public void sendGameBoard(ArrayList<Button> gameBoard){

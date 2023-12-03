@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -11,7 +12,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class ClientGUI extends Application {
     private TextField ipTextField = new TextField();
@@ -33,10 +36,17 @@ public class ClientGUI extends Application {
         primaryStage.setScene(createConnectionScene());
         primaryStage.show();
 
+        Consumer<Serializable> callback = data -> {
+            Platform.runLater(() -> {
+                updatePlayScene((char[]) data);
+            });
+        };
+
         connectButton.setOnAction(event -> {
             try{
                 primaryStage.setTitle("Choose Difficulty");
                 //TODO: Add code to create client thread and socket instance
+
                 primaryStage.setScene(createDifficultyScene());
             }catch (Exception e){
                 System.out.println("Could not connect to server");
@@ -50,6 +60,9 @@ public class ClientGUI extends Application {
                 gameDifficulty = ((Button)event.getSource()).getText();
                 primaryStage.setTitle("Play Game");
                 primaryStage.setScene(createPlayScene());
+
+                Client client = new Client(callback, "127.0.0.1", 1000);
+                client.start();
             }
         };
 
@@ -116,8 +129,14 @@ public class ClientGUI extends Application {
         return new Scene(vBox, 500, 500);
     }
 
-    //FIXME:  Parameter should be serializable object sent from server
-    public void updatePlayScene(){
-        //ToDo: Update gameBoard and scoreBoard based on object
+    public void updatePlayScene(char[] gameBoardString){
+        for (int i = 0; i < 9; i++){
+            if (gameBoardString[i] == 'b'){
+                gameBoard.get(i).setText("_");
+            }
+            else{
+                gameBoard.get(i).setText(String.valueOf(gameBoardString[i]));
+            }
+        }
     }
 }
