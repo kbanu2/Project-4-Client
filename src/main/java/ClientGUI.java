@@ -21,6 +21,8 @@ public class ClientGUI extends Application {
     private TextField portTextField = new TextField();
     private TextField usernameTextFIeld = new TextField();
     private Button connectButton = new Button("Attempt Connection");
+    private Button newGame = new Button("New Game");
+    private Button quit = new Button("Quit");
     Button easy = new Button("Easy");
     Button medium = new Button("Medium");
     Button hard = new Button("Hard");
@@ -90,7 +92,8 @@ public class ClientGUI extends Application {
                         scoreBoard.getItems().add("Server Won");
                     }
 
-                    primaryStage.setScene(createDifficultyScene());
+                    newGame.setVisible(true);
+                    quit.setVisible(true);
                 }
             }
         };
@@ -98,6 +101,9 @@ public class ClientGUI extends Application {
         easy.setOnAction(difficultySelectionEvent);
         medium.setOnAction(difficultySelectionEvent);
         hard.setOnAction(difficultySelectionEvent);
+
+        newGame.setOnAction(event -> primaryStage.setScene(createDifficultyScene()));
+        quit.setOnAction(event -> System.exit(1));
     }
 
     public Scene createConnectionScene(){
@@ -120,6 +126,8 @@ public class ClientGUI extends Application {
 
     public Scene createPlayScene(){
         gameBoard.clear();
+        newGame.setVisible(false);
+        quit.setVisible(false);
 
         for (int i = 0; i < 3; i++){
             gameBoard.add(new Button("_"));
@@ -134,7 +142,7 @@ public class ClientGUI extends Application {
         HBox row1 = new HBox(gameBoard.get(0), gameBoard.get(1), gameBoard.get(2));
         HBox row2 = new HBox(gameBoard.get(3), gameBoard.get(4), gameBoard.get(5));
         HBox row3 = new HBox(gameBoard.get(6), gameBoard.get(7), gameBoard.get(8));
-        HBox score = new HBox(new Label("Difficulty: " + gameDifficulty), scoreBoard);
+        HBox score = new HBox(new Label("Difficulty: " + gameDifficulty), scoreBoard, new VBox(newGame, quit));
         VBox vBox = new VBox(score, row1, row2, row3);
         score.setSpacing(10);
         vBox.setSpacing(30);
