@@ -19,13 +19,16 @@ import java.util.function.Consumer;
 public class ClientGUI extends Application {
     private TextField ipTextField = new TextField();
     private TextField portTextField = new TextField();
+    private TextField usernameTextFIeld = new TextField();
     private Button connectButton = new Button("Attempt Connection");
     Button easy = new Button("Easy");
     Button medium = new Button("Medium");
     Button hard = new Button("Hard");
     private ListView<String> scoreBoard = new ListView<>();
     private final ArrayList<Button> gameBoard = new ArrayList<>(9);
+    private EventHandler<ActionEvent> boardSelectionEvent;
     private String gameDifficulty;
+    private Client client;
     public static void main(String[] args) {
         launch(args);
     }
@@ -38,7 +41,8 @@ public class ClientGUI extends Application {
 
         Consumer<Serializable> callback = data -> {
             Platform.runLater(() -> {
-                updatePlayScene((char[]) data);
+                GameState gameState = (GameState) data;
+                updatePlayScene(gameState.gameBoard, gameState.topScoreNames, gameState.topScorePoints);
             });
         };
 
@@ -46,6 +50,8 @@ public class ClientGUI extends Application {
             try{
                 primaryStage.setTitle("Choose Difficulty");
                 //TODO: Add code to create client thread and socket instance
+                client = new Client(callback, "127.0.0.1", 1000, "krenar"); //FIXME: Connection should be made earlier, not during difficulty selection
+                client.start();
 
                 primaryStage.setScene(createDifficultyScene());
             }catch (Exception e){
@@ -61,15 +67,32 @@ public class ClientGUI extends Application {
                 primaryStage.setTitle("Play Game");
                 primaryStage.setScene(createPlayScene());
 
-                Client client = new Client(callback, "127.0.0.1", 1000);
-                client.start();
+                client.sendGameDifficulty(gameDifficulty);
             }
         };
 
-        EventHandler<ActionEvent> boardSelectionEvent = new EventHandler<ActionEvent>() {
+        boardSelectionEvent = new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                //TODO: Implement client method to send choice to server
+                ((Button) event.getSource()).setText("O");
+                client.sendGameBoard(gameBoard);
+                GameState gameState = client.getGameState();
+
+                if (gameState.gameOver){
+                    scoreBoard.getItems().clear();
+
+                    if (gameState.clientWon){
+                        scoreBoard.getItems().add("You Won!");
+                    }
+                    else if (gameState.draw){
+                        scoreBoard.getItems().add("Draw!");
+                    }
+                    else{
+                        scoreBoard.getItems().add("Server Won");
+                    }
+
+                    primaryStage.setScene(createDifficultyScene());
+                }
             }
         };
 
@@ -81,12 +104,15 @@ public class ClientGUI extends Application {
     public Scene createConnectionScene(){
         HBox hBox1 = new HBox(new Label("Enter IP Address of Server: "), ipTextField);
         HBox hBox2 = new HBox(new Label("Enter Port of Server: " ), portTextField);
-        VBox vBox = new VBox(hBox1, hBox2, connectButton);
+        HBox hBox3 = new HBox(new Label("Enter Your Username: " ), usernameTextFIeld);
+        VBox vBox = new VBox(hBox1, hBox2, hBox3, connectButton);
 
         hBox1.setAlignment(Pos.CENTER);
         hBox1.setSpacing(10);
         hBox2.setAlignment(Pos.CENTER);
         hBox2.setSpacing(10);
+        hBox3.setAlignment(Pos.CENTER);
+        hBox3.setSpacing(10);
         vBox.setAlignment(Pos.CENTER);
         vBox.setSpacing(10);
 
@@ -100,6 +126,10 @@ public class ClientGUI extends Application {
             gameBoard.add(new Button("_"));
         }
 
+        for (int i = 0; i < 9; i++){
+            gameBoard.get(i).setOnAction(boardSelectionEvent);
+        }
+
         HBox row1 = new HBox(gameBoard.get(0), gameBoard.get(1), gameBoard.get(2));
         HBox row2 = new HBox(gameBoard.get(3), gameBoard.get(4), gameBoard.get(5));
         HBox row3 = new HBox(gameBoard.get(6), gameBoard.get(7), gameBoard.get(8));
@@ -108,7 +138,7 @@ public class ClientGUI extends Application {
         score.setSpacing(10);
         vBox.setSpacing(30);
         vBox.setAlignment(Pos.CENTER);
-        scoreBoard.setMaxHeight(60);
+        scoreBoard.setMaxHeight(80);
         score.setAlignment(Pos.CENTER);
         row1.setSpacing(10);
         row1.setAlignment(Pos.CENTER);
@@ -129,13 +159,20 @@ public class ClientGUI extends Application {
         return new Scene(vBox, 500, 500);
     }
 
-    public void updatePlayScene(char[] gameBoardString){
+    public void updatePlayScene(String[] gameBoardString, ArrayList<String> topScoreNames, ArrayList<String> topScorePoints){
         for (int i = 0; i < 9; i++){
-            if (gameBoardString[i] == 'b'){
+            if (gameBoardString[i].charAt(0) == 'b'){
                 gameBoard.get(i).setText("_");
             }
             else{
-                gameBoard.get(i).setText(String.valueOf(gameBoardString[i]));
+                gameBoard.get(i).setText(gameBoardString[i]);
+            }
+        }
+
+        if (!topScoreNames.isEmpty() && !topScorePoints.isEmpty()){
+            scoreBoard.getItems().clear();
+            for (int i = topScoreNames.size() - 1; i >= 0; i--){
+                scoreBoard.getItems().add(topScoreNames.get(i) + " " + topScorePoints.get(i));
             }
         }
     }
