@@ -49,7 +49,6 @@ public class ClientGUI extends Application {
         connectButton.setOnAction(event -> {
             try{
                 primaryStage.setTitle("Choose Difficulty");
-                //TODO: Add code to create client thread and socket instance
                 client = new Client(callback, "127.0.0.1", 1000, "krenar"); //FIXME: Connection should be made earlier, not during difficulty selection
                 client.start();
 
@@ -120,6 +119,8 @@ public class ClientGUI extends Application {
     }
 
     public Scene createPlayScene(){
+        gameBoard.clear();
+
         for (int i = 0; i < 3; i++){
             gameBoard.add(new Button("_"));
             gameBoard.add(new Button("_"));
