@@ -51,7 +51,7 @@ public class ClientGUI extends Application {
         connectButton.setOnAction(event -> {
             try{
                 primaryStage.setTitle("Choose Difficulty");
-                client = new Client(callback, "127.0.0.1", 1000, "krenar"); //FIXME: Connection should be made earlier, not during difficulty selection
+                client = new Client(callback, ipTextField.getText(), Integer.parseInt(portTextField.getText()), usernameTextFIeld.getText());
                 client.start();
 
                 primaryStage.setScene(createDifficultyScene());
@@ -80,6 +80,10 @@ public class ClientGUI extends Application {
                 GameState gameState = client.getGameState();
 
                 if (gameState.gameOver){
+                    for (int i = 0; i < 9; i++){
+                        gameBoard.get(i).setDisable(true);
+                    }
+
                     scoreBoard.getItems().clear();
 
                     if (gameState.clientWon){
@@ -110,7 +114,7 @@ public class ClientGUI extends Application {
         HBox hBox1 = new HBox(new Label("Enter IP Address of Server: "), ipTextField);
         HBox hBox2 = new HBox(new Label("Enter Port of Server: " ), portTextField);
         HBox hBox3 = new HBox(new Label("Enter Your Username: " ), usernameTextFIeld);
-        VBox vBox = new VBox(hBox1, hBox2, hBox3, connectButton);
+        VBox vBox = new VBox(hBox1, hBox2, hBox3, connectButton, new Label("Note: Local host is 127.0.0.1 :)"));
 
         hBox1.setAlignment(Pos.CENTER);
         hBox1.setSpacing(10);
@@ -175,6 +179,7 @@ public class ClientGUI extends Application {
             }
             else{
                 gameBoard.get(i).setText(gameBoardString[i]);
+                gameBoard.get(i).setDisable(true);
             }
         }
 

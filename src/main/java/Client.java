@@ -1,4 +1,6 @@
+import javafx.animation.PauseTransition;
 import javafx.scene.control.Button;
+import javafx.util.Duration;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -119,7 +121,13 @@ public class Client extends Thread{
             out.writeObject(boardAsString.toString());
 
             gameState = (GameState) in.readObject();
-            callback.accept(gameState);
+
+
+            PauseTransition pauseTransition = new PauseTransition(Duration.seconds(2));
+
+            pauseTransition.setOnFinished(event -> callback.accept(gameState));
+
+            pauseTransition.play();
         }catch (Exception e){
             e.printStackTrace();
         }
